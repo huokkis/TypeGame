@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <title>Typing speed test</title>
+    <link rel="stylesheet" href="TypeGame.css">
+    <script>
+        $(document).ready( function(){
+
+            var message = {
+                messageType: "SETTINGS",
+                options: {
+                    // JOTAIN
+                }
+            };
+            window.parent.postMessage(message,'*');
+
+            var text = "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do " +
+                "eiusmod tempor incididunt ut labore et dolore magna aliqua Ut " +
+                "enim ad minim veniam quis nostrud exercitation ullamco laboris " +
+                "nisi ut aliquip ex ea commodo consequat Duis aute irure dolor in "+
+                "reprehenderit in voluptate velit esse cillum dolore eu fugiat " +
+                "nulla pariatur Excepteur sint occaecat cupidatat non proident " +
+                "sunt in culpa qui officia deserunt mollit anim id est laborum";
+
+            var words = text.split(' ');
+            var wordCount = 0;
+            var mistakes = 0;
+            var timer;
+            document.getElementById('typingarea').disabled = true;
+            document.getElementById('typingarea').value = "";
+
+            $('#start').click( function(){
+                wordCount = 0;
+                mistakes = 0;
+                document.getElementById('result').innerHTML = "";
+                document.getElementById('typingarea').disabled = false;
+
+                document.getElementById('typingarea').focus();
+                document.getElementById('typingarea').select();
+
+                timer = setInterval(function(){newWord()}, 3000-(wordCount*50));
+            });
+
+
+            function newWord() {
+
+                if (mistakes >= 5) {
+                    end();
+                    return;
+                }
+
+                var input = document.getElementById('typingarea').value; //maybe need to trim whitespace off?
+                var correct = $('#word').text();
+
+                if (input != correct) {
+                    mistakes += 1;
+                }
+                document.getElementById('typingarea').value = "";
+                wordCount += 1;
+                document.getElementById('word').innerHTML = words[Math.floor(Math.random()*words.length)];
+                console.log(mistakes);
+                return;
+            }
+
+            function end() {
+
+                //document.getElementById('result').focus();
+                //document.getElementById('result').select();
+
+                clearInterval(timer);
+                document.getElementById('typingarea').disabled = true;
+                document.getElementById('word').innerHTML = ""; //NOT WORKING for some reason
+                document.getElementById('result').innerHTML =  "Game over, you made too many mistakes. You managed "
+                    + (wordCount - mistakes) + " words. You can save your score and/or play again.";
+                return;
+            }
+
+
+            $('#save_game').click( function() {
+                clearInterval(timer);
+                document.getElementById('typingarea').disabled = true;
+                var message = {
+                    messageType: "SAVE",
+                    gameState: {
+                        mistakes: mistakes,
+                        score: wordCount
+                    }
+                };
+                parent.window.postMessage(message,'*');
+            });
+
+            $('#load_game').click( function() {
+                var message = {
+                    messageType: "LOAD_REQUEST"
+                };
+                parent.window.postMessage(message,'*');
+            });
+  
+
+            $('#save_score').click( function() {
+                var message = {
+                    messageType: "SCORE",
+                    score: wordCount
+                };
+                parent.window.postMessage(message,'*');
+
+            });
+
+            window.addEventListener("message", function(event){
+                if (event.data.messageType === "LOAD") {
+                    wordCount = event.data.score;
+                    mistakes = event.data.mistakes;
+                } else if (event.data.messageType === "ERROR") {
+                    alert(event.data.info);
+                }
+            });
+        });
+
+    </script>
+</head>
+<body>
+<center>
+    <button id="start">Start</button>
+    <p id="word">The words you have to write appear here</p>
+    <input type=text name="typingarea" id="typingarea" size=15>
+
+    <div class="buttongroup">
+        <button id="save_game">Save Game</button>
+        <button id="load_game">Load Game</button>
+        <button id="save_score">Save Score</button>
+    </div>
+
+    <p id="result"></p>
+</center>
+
+
+</body>
+</html>
