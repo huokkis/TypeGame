@@ -11,7 +11,8 @@
             var message = {
                 messageType: "SETTINGS",
                 options: {
-                    // JOTAIN
+                    "width": 400,
+                    "height": 400
                 }
             };
             window.parent.postMessage(message,'*');
@@ -30,12 +31,28 @@
             var timer;
             document.getElementById('typingarea').disabled = true;
             document.getElementById('typingarea').value = "";
+            document.getElementById('result').innerHTML = "";
+            document.getElementById('save_game').disabled = true;
+            document.getElementById('save_score').disabled = true;
 
-            $('#start').click( function(){
+            $("#clear").click( function() {
                 wordCount = 0;
                 mistakes = 0;
+                clearInterval(timer);
+                document.getElementById('word').innerHTML = "";
+                document.getElementById('result').innerHTML = "";
+                document.getElementById('start').disabled = false;
+                document.getElementById('load_game').disabled = false;
+                document.getElementById('save_game').disabled = true;
+                document.getElementById('save_score').disabled = true;
+            });
+
+            $('#start').click( function(){
                 document.getElementById('result').innerHTML = "";
                 document.getElementById('typingarea').disabled = false;
+                document.getElementById('start').disabled = true;
+                document.getElementById('save_game').disabled = false;
+                document.getElementById('load_game').disabled = true;
 
                 document.getElementById('typingarea').focus();
                 document.getElementById('typingarea').select();
@@ -45,7 +62,6 @@
 
 
             function newWord() {
-
                 if (mistakes >= 5) {
                     end();
                     return;
@@ -65,13 +81,12 @@
             }
 
             function end() {
-
-                //document.getElementById('result').focus();
-                //document.getElementById('result').select();
-
                 clearInterval(timer);
                 document.getElementById('typingarea').disabled = true;
-                document.getElementById('word').innerHTML = ""; //NOT WORKING for some reason
+                document.getElementById('save_game').disabled = true;
+                document.getElementById('save_score').disabled = false;
+                document.getElementById('start').disabled = true;
+
                 document.getElementById('result').innerHTML =  "Game over, you made too many mistakes. You managed "
                     + (wordCount - mistakes) + " words. You can save your score and/or play again.";
                 return;
@@ -89,6 +104,7 @@
                     }
                 };
                 parent.window.postMessage(message,'*');
+                alert("Game saved!");
             });
 
             $('#load_game').click( function() {
@@ -105,13 +121,15 @@
                     score: wordCount
                 };
                 parent.window.postMessage(message,'*');
-
+                alert("Score saved!");
             });
 
             window.addEventListener("message", function(event){
                 if (event.data.messageType === "LOAD") {
+                    document.getElementById('clear').click();
                     wordCount = event.data.score;
                     mistakes = event.data.mistakes;
+                    alert("Previous game state loaded. Please press start.");
                 } else if (event.data.messageType === "ERROR") {
                     alert(event.data.info);
                 }
@@ -123,6 +141,7 @@
 <body>
 <center>
     <button id="start">Start</button>
+    <button id="clear">Clear</button>
     <p id="word">The words you have to write appear here</p>
     <input type=text name="typingarea" id="typingarea" size=15>
 
